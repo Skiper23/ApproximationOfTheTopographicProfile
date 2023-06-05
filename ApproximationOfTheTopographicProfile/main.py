@@ -6,6 +6,21 @@ WIELOMIAN = 'w'
 POCHODNA = 'p'
 DRUGAPOCHODNA = 'd'
 DRUGAPOCHODNAZERO= 'z'
+ILOSCWEZLOW=30
+FILE="2018_paths//WielkiKanionKolorado.csv"
+def wyswietlWykres(xdata,ydata,ywyliczone,wezelx,wezely):
+    plt.subplot()
+    plt.plot(xdata, ywyliczone, color="red", label="")
+    plt.ylim(500, 2900)
+    plt.plot(xdata, ydata, color="blue")
+    plt.scatter(wezelx, wezely, color="green")
+    plt.title("Wielki Kanion Kolorado - ilosc wezlow 30")
+    plt.xlabel("Dystans (m)")
+    plt.ylabel("Wysokosc (m)")
+    plt.legend(['F(x)','f(x)','f(x0)'])
+
+    plt.show()
+
 def iloczynMianownik(indeks, wsp):
     sum=1
     for j in range(0,len(wsp)):
@@ -27,18 +42,17 @@ def wartoscInterpolacji(bazaLagrange, wspy):
         sum=sum+bazaLagrange[i]*wspy[i]
     return sum
 def interpolacjaLagrange(xdata,x):
+    bazaLagrange = []
+    ywyliczone = []
     for i in xdata:
         for j in range(0, len(x)):
             l = iloczynLicznik(i, x, j)
             m = iloczynMianownik(j, x)
             bazaLagrange.append(l / m)
-        ywyliczone.append(wartoscInterpolacji(bazaLagrange, y))
+        ywyliczone.append(wartoscInterpolacji(bazaLagrange, wezely))
         bazaLagrange.clear()
 
-    plt.subplot()
-    plt.plot(xdata, ywyliczone, color="blue")
-    plt.plot(xdata, ydata, color="red")
-    plt.show()
+    wyswietlWykres(xdata,ydata,ywyliczone,wezelx,wezely)
 
 def tworzWspolczynniki(xn,x,indeks,typ,size):
     wektor=np.zeros(size)
@@ -99,38 +113,31 @@ def tworzMacierz(xdata,ydata):
 
 def sklejWartosci(wektorRozwiazan, xdane, x):
     indeks=bisect.bisect(xdane,x)
+    if indeks == len(xdane):
+        indeks-=1
     sum=0
     for i in range(4*(indeks-1), 4*(indeks-1)+4):
         pom=wektorRozwiazan[i]*pow(x-xdane[indeks-1],i-4*(indeks-1))
         sum=sum+pom
     return sum
 
+def interpolacjafunkcjamisklejanymi(wezelx, wezely):
+    wektorRozwiazan = tworzMacierz(wezelx, wezely)
+    ywyliczone=[]
+    for i in xdata:
+        wartosc = sklejWartosci(wektorRozwiazan, wezelx, i)
+        ywyliczone.append(float(wartosc))
 
-dane = pd.read_csv("2018_paths//Obiadek.csv")
+    wyswietlWykres(xdata,ydata,ywyliczone,wezelx,wezely)
+
+
+dane = pd.read_csv(FILE)
 xdata = dane['x'].tolist()
 ydata = dane['y'].tolist()
-x=xdata[::10]
-y=ydata[::10]
-xtest=xdata[::10]
-ytest=ydata[::10]
-bazaLagrange=[]
-ywyliczone=[]
+krok=round(len(xdata)/ILOSCWEZLOW)
+wezelx=xdata[::krok]
+wezely=ydata[::krok]
 
-#interpolacjaLagrange(xdata,x)
-wektorRozwiazan=tworzMacierz(x,y)
-print(len(x))
-print(len(wektorRozwiazan))
-for i in xdata:
-    if(i<x[len(x)-1]):
-        ywyliczone.append(sklejWartosci(wektorRozwiazan, x, i))
-    else:
-        ywyliczone.append(0)
 
-plt.subplot()
-plt.plot(xdata, ywyliczone, color="blue")
-plt.plot(xdata, ydata, color="red")
-plt.show()
-print(ywyliczone)
-print(ydata)
-print(x)
-print(y)
+interpolacjaLagrange(xdata,wezelx)
+interpolacjafunkcjamisklejanymi(wezelx, wezely)
